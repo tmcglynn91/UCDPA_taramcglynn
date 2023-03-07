@@ -1,0 +1,69 @@
+import numpy as np
+import pandas as pd
+import seaborn as sb
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import metrics
+from sklearn.metrics import accuracy_score
+
+df = pd.read_csv(r'C:\Users\taram\Desktop\Python_Course\diabetes_012_health_indicators_BRFSS2015.csv')
+print(df)
+
+df.info()
+df.head()
+num_rows = df.shape[0]
+print(num_rows)
+df.isnull().sum()
+num_dups = df.duplicated().sum()
+print(num_dups)
+df = df.drop_duplicates()
+
+top_rows = df.head(20)
+print(top_rows)
+
+unique_values = {}
+for col in df.columns:
+    unique_values[col] = df[col].value_counts().shape[0]
+pd.DataFrame(unique_values, index=['unique value count']).transpose()
+print(unique_values)
+
+
+df = df.rename(columns={'Diabetes_012': 'Diabetes'})
+
+labels=["No Diabetes", "Pre-Diabetes", "Has Diabetes"]
+plt.pie(df["Diabetes"].value_counts() , labels =labels)
+plt.show()
+
+X = df.drop('Diabetes', axis = 1)
+y = df['Diabetes']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.33, random_state = 0)
+print(X_train.shape)
+print(y_train.shape)
+print(X_test.shape)
+print(y_test.shape)
+
+rf = RandomForestClassifier(random_state = 1, max_features = 'sqrt', n_jobs = 1, verbose = 1)
+rf.fit(X_train, y_train)
+rf.score(X_test, y_test)
+
+y_pred = rf.predict(X_test)
+print(y_pred)
+
+report = metrics.classification_report(y_test, y_pred)
+print(report)
+feat= pd.Series(rf.feature_importances_, index = X_train.columns).sort_values(ascending = False)
+print(feat)
+
+plt.figure(figsize = (12,8))
+sb.barplot(x = feat, y = feat.index)
+plt.show()
+
+
+db_smoke = df.groupby(['Diabetes', 'Smoker']).size().reset_index(name = 'Count_of_People')
+print(db_smoke)
+plt.figure(figsize = (12,8))
+sb.barplot(x = 'Diabetes', y = 'Count_of_People', hue= 'Smoker', data= db_smoke)
+plt.show()
+
+
